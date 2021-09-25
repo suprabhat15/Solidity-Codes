@@ -1,0 +1,41 @@
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.7.0 <0.9.0;
+
+contract SmartBankAccount {
+
+    uint totalContractBalance = 0;  // indicates the balance of the Smart Contract
+
+    function getContractBalance() public view returns(uint){. // function to fetch the balance of Smart Contract
+        return totalContractBalance;
+    }
+    
+    mapping(address => uint) balances;                // linking the address of any user/smart contract with the amount available to the address. 
+    mapping(address => uint) depositTimestamps;       // denotes the time when the execution of the transactions in the block gets completed.
+    
+    function addBalance() public payable {           // payable keyword denotes "addBalance()" can accept money.
+        balances[msg.sender] = msg.value;
+        totalContractBalance = totalContractBalance + msg.value;
+        depositTimestamps[msg.sender] = block.timestamp;
+    }
+    
+    function getBalance(address userAddress) public view returns(uint) { // public keyword denotes "getBalance()" can be used by anyone outside or inside of the smart contract.
+        uint principal = balances[userAddress];
+        uint timeElapsed = block.timestamp - depositTimestamps[userAddress]; //seconds
+        return principal + uint((principal * 7 * timeElapsed) / (100 * 365 * 24 * 60 * 60)) + 1; //simple interest of 0.07%  per year
+                // complex calculation is done in line 24 bcoz Solidity does not support float, double values.
+    }
+    
+    function withdraw() public payable {
+        address payable withdrawTo = payable(msg.sender);
+        uint amountToTransfer = getBalance(msg.sender);
+        withdrawTo.transfer(amountToTransfer);
+        totalContractBalance = totalContractBalance - amountToTransfer;
+        balances[msg.sender] = 0;
+    }
+    
+    function addMoneyToContract() public payable {  // this function is used to "INCENTIVIZE" the user for depositing his/her money in my smart contract
+        totalContractBalance += msg.value;
+    }
+
+    
+}
